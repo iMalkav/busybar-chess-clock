@@ -1,0 +1,21 @@
+name: Bug report
+description: Report an application, installation or build problem
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Application, firmware and HTTP API versions
+      placeholder: Application version; firmware version; HTTP API version
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps, expected result and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove device addresses, passwords and tokens before attaching logs.
