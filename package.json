@@ -1,7 +1,7 @@
 {
   "name": "chess-clock",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Two-player chess clock for BUSY Bar",
   "author": "iMalkav",
   "repository": {
@@ -17,7 +17,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -b",
-    "test": "node --test tests/clock.test.ts tests/input.test.ts tests/visuals.test.ts tests/metadata.test.mjs",
+    "test": "node --test tests/clock.test.ts tests/input.test.ts tests/visuals.test.ts tests/settings.test.ts tests/metadata.test.mjs",
     "metadata": "node scripts/metadata.mjs",
     "build": "node scripts/prepare-resources.mjs && busy-cli build --emit both --bundle",
     "smoke": "node tests/bundle-smoke.mjs",

@@ -6,7 +6,6 @@ import {
   backToStart,
   clampInitialTime,
   createClock,
-  DEFAULT_INITIAL_TIME_MS,
   finishByCheckmate,
   formatTime,
   pressStart,
@@ -19,6 +18,7 @@ import {
 } from "./clock.ts";
 import { createInputHandler, type DeviceInputEvent } from "./input.ts";
 import { clockElements, clockTimeElements } from "./screens/clock.ts";
+import { DEFAULT_SETTINGS, parseSettings } from "./settings.ts";
 import {
   pulseOn,
   timePressure,
@@ -40,12 +40,14 @@ const CHECKMATE_SOUND = "sounds/session_completed.snd";
 
 function loadInitialTime(): number {
   const stored = localStorage.getItem(TIME_KEY);
-  if (stored === null) return DEFAULT_INITIAL_TIME_MS;
+  if (stored === null) return DEFAULT_SETTINGS.initialTimeMs;
   const parsed = Number(stored);
-  return Number.isFinite(parsed) ? clampInitialTime(parsed) : DEFAULT_INITIAL_TIME_MS;
+  return Number.isFinite(parsed) ? clampInitialTime(parsed) : DEFAULT_SETTINGS.initialTimeMs;
 }
 
-let state: ClockState = createClock(loadInitialTime());
+let settings = DEFAULT_SETTINGS;
+let hasDeviceSettings = false;
+let state: ClockState = createClock(settings.initialTimeMs, settings.startingPlayer);
 let launchedAt = Date.now();
 let turnEffect: TurnEffect | null = null;
 let lastCriticalSecond: number | null = null;
@@ -74,6 +76,7 @@ function report(error: unknown): void {
 }
 
 function playSound(path: string): void {
+  if (!settings.isSoundEnabled) return;
   void device.AudioPlay({ application_name: APP, path }).catch(() => {
     // Audio is decorative. A muted/busy audio service must never stop the clock.
   });
@@ -294,7 +297,7 @@ const handleInput = createInputHandler({
         : selectStartingPlayer(state, delta);
     if (state !== previous) {
       if (state.mode === "editing") {
-        localStorage.setItem(TIME_KEY, String(state.initialTimeMs));
+        if (!hasDeviceSettings) localStorage.setItem(TIME_KEY, String(state.initialTimeMs));
         console.info(`${APP}: time ${formatTime(state.initialTimeMs)}`);
       } else {
         console.info(`${APP}: starting player ${state.startingPlayer}`);
@@ -353,7 +356,16 @@ function tick(): void {
   }
 }
 
-function run(): void {
+async function run(): Promise<void> {
+  try {
+    settings = parseSettings(await device.AppsSettingsGet({ app_id: APP }));
+    hasDeviceSettings = true;
+  } catch (error) {
+    report(error);
+    settings = { ...DEFAULT_SETTINGS, initialTimeMs: loadInitialTime() };
+  }
+  state = createClock(settings.initialTimeMs, settings.startingPlayer);
+  launchedAt = Date.now();
   unsubscribeInput = listen("input", (event: DeviceInputEvent) => handleInput(event));
   tickHandle = setInterval(tick, TICK_MS);
   lastVisualFrameKey = visualFrameKey(state, {
@@ -382,4 +394,4 @@ function run(): void {
   console.info(`${APP}: started with ${formatTime(state.initialTimeMs)}`);
 }
 
-run();
+void run().catch(report);

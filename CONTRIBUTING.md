@@ -16,6 +16,8 @@ the firmware version when testing on a device.
 
 - `src/clock.ts`: clock rules and state transitions.
 - `src/input.ts`: button, encoder and long-press mapping.
+- `src/settings.ts`: validation of the firmware settings document.
+- `src/appmeta/settings.json`: settings shown by the firmware UI.
 - `src/visuals.ts`: animation timing and time-pressure state.
 - `src/screens/clock.ts`: display composition.
 - `src/main.ts`: lifecycle, persistence and display updates.
@@ -24,6 +26,11 @@ the firmware version when testing on a device.
 
 Commit `pnpm-lock.yaml` with dependency changes. Generated builds, installed
 dependencies and local settings are excluded by `.gitignore`.
+
+The app reads its settings through `GET /api/apps/settings` with its own app ID.
+Schema defaults are shared with the parser. If loading fails, the app uses the
+legacy locally saved time and default player/sound settings. In-app setup
+shortcuts are temporary when firmware settings are available.
 
 For asset changes, update [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) with
 the source and license. Original WAV files are in `art/sounds/`; regenerate the
