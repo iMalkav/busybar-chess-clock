@@ -4,18 +4,46 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { Script } from 'node:vm'
 
+const scenarios = ['defaults', 'configured', 'unavailable', 'invalid', 'deferred']
+const scenario = process.argv[2]
+if (scenario === undefined) {
+  for (const name of scenarios) {
+    execFileSync(process.execPath, [fileURLToPath(import.meta.url), name], {
+      stdio: 'inherit', timeout: 10_000,
+    })
+  }
+  process.exit(0)
+}
+assert.ok(scenarios.includes(scenario), `unknown scenario: ${scenario}`)
+
 const sourceManifest = JSON.parse(
   readFileSync(new URL('../src/appmeta/manifest.json', import.meta.url), 'utf8'),
 )
+const settingsSchema = JSON.parse(
+  readFileSync(new URL('../src/appmeta/settings.json', import.meta.url), 'utf8'),
+)
+const configured = scenario === 'configured' || scenario === 'deferred'
+const fallback = scenario === 'unavailable' || scenario === 'invalid'
+const startingPlayer = configured ? 1 : 0
+const initialMinutes = configured ? 12 : fallback ? 8 : settingsSchema.fields.initial_minutes.default
+const soundEnabled = !configured
+const localWrites = []
+const errors = []
+const originalConsoleError = console.error
+console.error = (...parts) => errors.push(parts.join(' '))
+let releaseSettings
 const requests = []
 let inputHandler
 let inputUnbound = false
 
 globalThis.localStorage = (() => {
-  const values = new Map()
+  const values = new Map([['initial-time-ms', String(8 * 60_000)]])
   return {
     getItem: (key) => values.get(key) ?? null,
-    setItem: (key, value) => values.set(key, String(value)),
+    setItem: (key, value) => {
+      localWrites.push({ key, value: String(value) })
+      values.set(key, String(value))
+    },
   }
 })()
 
@@ -31,6 +59,18 @@ globalThis.fetch = async (input, init) => {
   const request = input instanceof Request ? input : new Request(input, init)
   const body = request.body ? await request.text() : ''
   requests.push({ url: request.url, method: request.method, body })
+
+  if (new URL(request.url).pathname === '/api/apps/settings') {
+    assert.equal(request.method, 'GET')
+    assert.equal(new URL(request.url).searchParams.get('app_id'), sourceManifest.id)
+    if (scenario === 'unavailable') return new Response('Settings unavailable', { status: 503 })
+    const response = new Response(JSON.stringify({
+      version: scenario === 'invalid' ? settingsSchema.version + 1 : settingsSchema.version,
+      values: configured ? { initial_minutes: 12, starting_player: 'right', sound: false } : {},
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    if (scenario === 'deferred') return new Promise((resolve) => { releaseSettings = () => resolve(response) })
+    return response
+  }
 
   if (request.url.endsWith('/api/version')) {
     return new Response(JSON.stringify({ api_semver: sourceManifest.api_version }), {
@@ -76,6 +116,7 @@ const manifest = JSON.parse(extract('app.busy.chess_clock/appmeta/manifest.json'
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 assert.equal(manifest.version, pkg.version)
 assert.deepEqual(manifest, sourceManifest)
+assert.deepEqual(JSON.parse(extract('app.busy.chess_clock/appmeta/settings.json')), settingsSchema)
 for (const name of ['countdown_tick', 'countdown_finish', 'session_completed']) {
   const sound = extract(`app.busy.chess_clock/sounds/${name}.snd`)
   assert.ok(sound.length > 0 && sound.length % 2 === 0, `invalid PCM: ${name}`)
@@ -89,9 +130,17 @@ for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'BUSY-App-MIT.txt', 'OF
 }
 assert.equal(entries.some((entry) => /\.(wav|ts|tsbuildinfo)$/.test(entry)), false)
 await import(bundle.href)
+if (scenario === 'deferred') {
+  await new Promise((resolve) => setTimeout(resolve, 20))
+  assert.equal(typeof inputHandler, 'undefined', 'input was enabled before settings loaded')
+  assert.equal(requests.some((request) => request.url.endsWith('/api/display/draw')), false)
+  assert.equal(typeof releaseSettings, 'function')
+  releaseSettings()
+}
 await new Promise((resolve) => setTimeout(resolve, 50))
 
 assert.equal(typeof inputHandler, 'function')
+assert.equal(requests.filter((request) => new URL(request.url).pathname === '/api/apps/settings').length, 1)
 
 const draws = requests.filter(
   (request) => request.method === 'POST' && request.url.endsWith('/api/display/draw'),
@@ -118,12 +167,13 @@ const timeElements = elements.filter(
 )
 assert.deepEqual(
   timeElements.filter((element) => element.display === 'front').map((element) => element.text),
-  ['5:00', '5:00'],
+  [`${initialMinutes}:00`, `${initialMinutes}:00`],
 )
 assert.deepEqual(
   timeElements.filter((element) => element.display === 'back').map((element) => element.text),
-  ['5:00', '5:00', '5:00', '5:00'],
+  Array(4).fill(`${initialMinutes}:00`),
 )
+assert.ok(elements.some((element) => element.id === `back-arena-p${startingPlayer}-status` && element.text === 'FIRST MOVE'))
 for (const element of elements) {
   const width = element.display === 'back' ? 160 : 72
   const height = element.display === 'back' ? 80 : 16
@@ -131,6 +181,21 @@ for (const element of elements) {
   assert.ok(element.y >= 0 && element.y < height, `y outside ${element.display}: ${element.y}`)
 }
 
+inputHandler({ key: 'ok', action: 'release' })
+inputHandler({ key: 'encoder', delta: 1 })
+inputHandler({ key: 'ok', action: 'release' })
+await new Promise((resolve) => setTimeout(resolve, 20))
+assert.deepEqual(localWrites, fallback ? [{ key: 'initial-time-ms', value: String((initialMinutes + 1) * 60_000) }] : [])
+inputHandler({ key: 'start', action: 'press' })
+inputHandler({ key: 'start', action: 'release' })
+await new Promise((resolve) => setTimeout(resolve, 20))
+const updatedElements = requests
+  .filter((request) => request.method === 'POST' && request.url.endsWith('/api/display/draw'))
+  .flatMap((request) => JSON.parse(request.body).elements)
+assert.ok(updatedElements.some((element) => element.id === `back-arena-p${startingPlayer}-status` && element.text === 'THINKING'))
+assert.equal(requests.some((request) => request.url.endsWith('/api/audio/play')), soundEnabled)
+inputHandler({ key: 'back', action: 'press' })
+await new Promise((resolve) => setTimeout(resolve, 20))
 inputHandler({ key: 'back', action: 'press' })
 await new Promise((resolve) => setTimeout(resolve, 50))
 
@@ -141,5 +206,9 @@ assert.ok(
   ),
   'bundle did not clear the display on exit',
 )
+assert.equal(errors.length, fallback ? 1 : 0, errors.join('\n'))
+if (scenario === 'unavailable') assert.match(errors[0], /HTTP 503/)
+if (scenario === 'invalid') assert.match(errors[0], /Unsupported settings schema version/)
+console.error = originalConsoleError
 
-console.log('Bundle smoke test passed')
+console.log(`Bundle smoke test passed: ${scenario}`)

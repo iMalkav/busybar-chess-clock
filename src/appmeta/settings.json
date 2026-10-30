@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "version": 1,
+  "fields": {
+    "initial_minutes": {
+      "type": "integer",
+      "label": "Time (min)",
+      "description": "Initial time for each player, in minutes.",
+      "default": 5,
+      "min": 1,
+      "max": 60,
+      "step": 1
+    },
+    "starting_player": {
+      "type": "enum",
+      "label": "First player",
+      "description": "Player whose clock starts first.",
+      "default": "left",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "right", "label": "Right" }
+      ]
+    },
+    "sound": {
+      "type": "boolean",
+      "label": "Sound",
+      "description": "Play turn, countdown and result sounds.",
+      "default": true
+    }
+  }
+}

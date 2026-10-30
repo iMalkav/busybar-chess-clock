@@ -1,4 +1,6 @@
 import type {
+  AppSettingsDocument,
+  AppsSettingsGetParams,
   AudioPlayParams,
   BusySnapshot,
   BusySnapshotSetParams,
@@ -7,8 +9,7 @@ import type {
   SuccessResponse,
 } from "@busy-app/busy-lib";
 
-// ChessClock uses five local endpoints. A dedicated client keeps the on-device
-// bundle small and avoids busy-lib's /version handshake on the first request.
+// Keeps the on-device bundle small and skips busy-lib's version handshake.
 const address = __BUSY_ADDR__;
 const origin = /^https?:\/\//i.test(address) ? address : `http://${address}`;
 const api = `${origin.replace(/\/$/, "")}/api`;
@@ -37,6 +38,10 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const device = {
+  AppsSettingsGet(params: AppsSettingsGetParams): Promise<AppSettingsDocument> {
+    return request("GET", `/apps/settings?app_id=${encodeURIComponent(params.app_id)}`);
+  },
+
   DisplayDraw(params: DisplayDrawParams): Promise<SuccessResponse> {
     return request("POST", "/display/draw", {
       ...params,

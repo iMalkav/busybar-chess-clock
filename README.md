@@ -9,7 +9,7 @@ and installed as a JavaScript application.
 - Selectable starting player and initial time from 1 to 60 minutes.
 - One-button turn switching and move counts.
 - Sound and color cues for turn changes, time pressure and game results.
-- Initial time saved between launches.
+- Saved settings for initial time, first player and sound.
 
 ## Install
 
@@ -18,6 +18,20 @@ Download the `.tgz` package from [Releases](../../releases) and follow
 
 The minimum firmware HTTP API version is specified by `api_version` in
 [src/appmeta/manifest.json](src/appmeta/manifest.json).
+
+## Settings
+
+Open **Apps → Chess Clock → Setup** on the BUSY Bar.
+
+| Setting | Purpose |
+| --- | --- |
+| Time (min) | Initial time for each player, from 1 to 60 minutes |
+| First player | Left or right player starts the clock |
+| Sound | Enable turn, countdown and result sounds |
+
+Settings are stored by the firmware and loaded when the app starts. The encoder
+and OK shortcuts below adjust the current launch without changing these saved
+settings.
 
 ## Controls
 
@@ -52,7 +66,7 @@ be omitted.
 | --- | --- |
 | `pnpm metadata` | Validate manifest and package versions |
 | `pnpm typecheck` | Type-check app, helpers and tests |
-| `pnpm test` | Run clock, input, visual-state and metadata tests |
+| `pnpm test` | Run clock, input, settings, visual-state and metadata tests |
 | `pnpm build` | Build the application directory and `.tgz` package |
 | `pnpm smoke` | Check the built package and startup/exit with a mocked API |
 | `pnpm check` | Run validation, tests, build and smoke check |

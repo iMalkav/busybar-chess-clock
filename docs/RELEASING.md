@@ -18,6 +18,8 @@ Record the app, firmware and HTTP API versions with the results.
 
 - Install the versioned archive and launch the app from Apps.
 - Check the icons, both displays, time editing and starting-player selection.
+- Configure time and first player in app settings, relaunch and check both values.
+- Disable sound in app settings and check turns, countdown and results.
 - Pass turns, check move counts and compare elapsed time with another clock.
 - Check time-pressure cues, sound, time-out and declared-checkmate results.
 - Check reset, Back, saved initial time, force-exit and relaunch.
