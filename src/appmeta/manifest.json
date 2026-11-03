@@ -1,6 +1,6 @@
 {
   "format_version": 1,
-  "id": "app.busy.chess_clock",
+  "id": "ru.malk-it.chess_clock",
   "name": "Chess Clock",
   "version": "0.3.0",
   "api_version": "27.14.0",

@@ -9,7 +9,7 @@
 4. Run `corepack pnpm release`.
 
 The command creates the application directory, the unversioned install package,
-`dist/app.busy.chess_clock-<version>.tgz`, `dist/SHA256SUMS` and
+`dist/ru.malk-it.chess_clock-<version>.tgz`, `dist/SHA256SUMS` and
 `dist/RELEASE_NOTES.md`. It does not publish them.
 
 ## Device checks

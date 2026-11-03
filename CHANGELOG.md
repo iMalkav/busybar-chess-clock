@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Changed the application ID to `ru.malk-it.chess_clock`.
+
 ## 0.3.0
 
 - Native app settings for initial time, starting player and sound.

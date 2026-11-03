@@ -8,21 +8,21 @@ commands below, use the Node.js version in [.nvmrc](.nvmrc) and pnpm from
 ## From a release
 
 Download the `.tgz` package and `SHA256SUMS` from the same
-[release](../../releases). Replace `<version>` in the commands below with the
-downloaded release version.
+[release](../../releases). Use the app ID and version from the downloaded filename
+`<app-id>-<version>.tgz` in the commands below.
 
 On Linux, verify the download with `sha256sum --check SHA256SUMS`. In PowerShell,
 compare the following output with the checksum in `SHA256SUMS`:
 
 ```powershell
-Get-FileHash "./app.busy.chess_clock-<version>.tgz" -Algorithm SHA256
+Get-FileHash "./<app-id>-<version>.tgz" -Algorithm SHA256
 ```
 
 With the BUSY Bar connected over USB, run from the download directory:
 
 ```sh
-pnpm dlx @busy-app/cli app install "./app.busy.chess_clock-<version>.tgz"
-pnpm dlx @busy-app/cli app run app.busy.chess_clock
+pnpm dlx @busy-app/cli app install "./<app-id>-<version>.tgz"
+pnpm dlx @busy-app/cli app run "<app-id>"
 ```
 
 The installed app can also be launched from **Apps → Chess Clock**.
@@ -39,7 +39,14 @@ corepack pnpm app:run
 ```
 
 These commands use the CLI version pinned in `package.json`. Installation reads
-`dist/app.busy.chess_clock.tgz`; run the build or checks first.
+`dist/ru.malk-it.chess_clock.tgz`; run the build or checks first.
+
+## App ID change
+
+BUSY Bar treats `ru.malk-it.chess_clock` as a separate app from earlier
+packages with ID `app.busy.chess_clock`. If both are installed, two
+Chess Clock entries can appear. Set your preferences in the new app
+before removing the old one.
 
 ## Connection options
 

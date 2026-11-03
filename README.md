@@ -74,8 +74,8 @@ be omitted.
 | `pnpm app:install` / `pnpm app:run` | Install the built package / launch it |
 | `pnpm app:stop` / `pnpm app:uninstall` | Stop / uninstall the app |
 
-The build uses `@busy-app/cli` to create `dist/app.busy.chess_clock/` and
-`dist/app.busy.chess_clock.tgz`, including scripts, icons, sounds and licenses.
+The build uses `@busy-app/cli` to create `dist/ru.malk-it.chess_clock/` and
+`dist/ru.malk-it.chess_clock.tgz`, including scripts, icons, sounds and licenses.
 `pnpm build --no-minify` produces readable JavaScript for debugging.
 
 The application calls its device's API through `localhost`. To select a device
@@ -89,7 +89,7 @@ device API; physical device checks are listed in the
 
 CI runs on Windows and Linux for pull requests and pushes to `main`. A version
 tag matching the package and manifest versions triggers a GitHub release with
-`app.busy.chess_clock-<version>.tgz` and `SHA256SUMS`. Tags use the manifest
+`ru.malk-it.chess_clock-<version>.tgz` and `SHA256SUMS`. Tags use the manifest
 version without a `v` prefix.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [docs/RELEASING.md](docs/RELEASING.md)

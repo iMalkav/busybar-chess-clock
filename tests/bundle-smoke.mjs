@@ -19,6 +19,7 @@ assert.ok(scenarios.includes(scenario), `unknown scenario: ${scenario}`)
 const sourceManifest = JSON.parse(
   readFileSync(new URL('../src/appmeta/manifest.json', import.meta.url), 'utf8'),
 )
+const appId = sourceManifest.id
 const settingsSchema = JSON.parse(
   readFileSync(new URL('../src/appmeta/settings.json', import.meta.url), 'utf8'),
 )
@@ -102,29 +103,29 @@ globalThis.fetch = async (input, init) => {
   })
 }
 
-const bundle = new URL('../dist/app.busy.chess_clock/scripts/main.js', import.meta.url)
+const bundle = new URL(`../dist/${appId}/scripts/main.js`, import.meta.url)
 new Script(readFileSync(bundle, 'utf8'), { filename: 'main.js' })
-const archive = new URL('../dist/app.busy.chess_clock.tgz', import.meta.url)
+const archive = new URL(`../dist/${appId}.tgz`, import.meta.url)
 const entries = execFileSync('tar', ['-tzf', fileURLToPath(archive)], { encoding: 'utf8' })
   .trim().split(/\r?\n/)
 for (const entry of entries) {
-  assert.ok(entry.startsWith('app.busy.chess_clock/'), `unexpected archive root: ${entry}`)
+  assert.ok(entry.startsWith(`${appId}/`), `unexpected archive root: ${entry}`)
   assert.ok(!entry.includes('..') && !entry.includes('\\'), `unsafe archive path: ${entry}`)
 }
 const extract = (entry) => execFileSync('tar', ['-xOf', fileURLToPath(archive), entry])
-const manifest = JSON.parse(extract('app.busy.chess_clock/appmeta/manifest.json'))
+const manifest = JSON.parse(extract(`${appId}/appmeta/manifest.json`))
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 assert.equal(manifest.version, pkg.version)
 assert.deepEqual(manifest, sourceManifest)
-assert.deepEqual(JSON.parse(extract('app.busy.chess_clock/appmeta/settings.json')), settingsSchema)
+assert.deepEqual(JSON.parse(extract(`${appId}/appmeta/settings.json`)), settingsSchema)
 for (const name of ['countdown_tick', 'countdown_finish', 'session_completed']) {
-  const sound = extract(`app.busy.chess_clock/sounds/${name}.snd`)
+  const sound = extract(`${appId}/sounds/${name}.snd`)
   assert.ok(sound.length > 0 && sound.length % 2 === 0, `invalid PCM: ${name}`)
   assert.notEqual(sound.subarray(0, 4).toString(), 'RIFF')
   assert.deepEqual(sound, readFileSync(new URL(`../src/sounds/${name}.snd`, import.meta.url)))
 }
 for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'BUSY-App-MIT.txt', 'OFL-1.1.txt', 'CC-BY-SA-4.0.txt']) {
-  const entry = entries.find((path) => path.startsWith('app.busy.chess_clock/resources/') && path.endsWith(`/${name}`))
+  const entry = entries.find((path) => path.startsWith(`${appId}/resources/`) && path.endsWith(`/${name}`))
   assert.ok(entry, `missing license notice: ${name}`)
   assert.ok(extract(entry).length > 0)
 }
@@ -153,7 +154,7 @@ assert.equal(
 )
 
 const payloads = draws.map((draw) => JSON.parse(draw.body))
-for (const payload of payloads) assert.equal(payload.application_name, 'app.busy.chess_clock')
+for (const payload of payloads) assert.equal(payload.application_name, appId)
 for (const request of requests) {
   assert.ok(['localhost', '127.0.0.1'].includes(new URL(request.url).hostname))
 }
