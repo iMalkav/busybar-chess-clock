@@ -11,6 +11,11 @@ and installed as a JavaScript application.
 - Sound and color cues for turn changes, time pressure and game results.
 - Saved settings for initial time, first player and sound.
 
+## Screenshots
+
+Native display captures and their firmware, settings and capture details are
+recorded in [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
+
 ## Install
 
 Download the `.tgz` package from [Releases](../../releases) and follow
@@ -99,3 +104,7 @@ and [CHANGELOG.md](CHANGELOG.md).
 
 Application code: [MIT](LICENSE). Sound effects retain CC-BY-SA-4.0 and font
 metrics retain OFL-1.1. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## AI assistance
+
+See [AI_ASSISTANCE.md](docs/AI_ASSISTANCE.md) for the role of AI in this project.

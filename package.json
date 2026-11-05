@@ -13,7 +13,12 @@
     "url": "https://github.com/iMalkav/busybar-chess-clock/issues"
   },
   "license": "MIT",
-  "keywords": ["busy-bar", "chess", "chess-clock", "javascript-app"],
+  "keywords": [
+    "busy-bar",
+    "chess",
+    "chess-clock",
+    "javascript-app"
+  ],
   "type": "module",
   "scripts": {
     "typecheck": "tsc -b",
