@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
 
 - Calmer front and rear layouts, visible control hints and matching clock precision.
 - Original shaded rook menu icons with a monochrome rear icon.

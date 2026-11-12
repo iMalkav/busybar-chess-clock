@@ -2,7 +2,7 @@
   "format_version": 1,
   "id": "ru.malk-it.chess_clock",
   "name": "Chess Clock",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "api_version": "27.14.0",
   "description": "Two-player chess clock",
   "author": "iMalkav",
