@@ -4,11 +4,9 @@ import { createInputHandler } from "../src/input.ts";
 
 function fixture(): {
   events: string[];
-  setNow(value: number): void;
   handle: ReturnType<typeof createInputHandler>;
 } {
   const events: string[] = [];
-  let now = 0;
   const handle = createInputHandler(
     {
       shortStart: () => events.push("start:short"),
@@ -17,36 +15,46 @@ function fixture(): {
       rotateEncoder: (delta) => events.push(`encoder:${delta}`),
       back: () => events.push("back"),
     },
-    { now: () => now, longPressMs: 1_000 },
   );
-  return { events, setNow: (value) => (now = value), handle };
+  return { events, handle };
 }
 
 test("a short Start press passes the turn", () => {
-  const { events, setNow, handle } = fixture();
-  setNow(100);
+  const { events, handle } = fixture();
   handle({ key: "start", action: "press" });
-  setNow(500);
   handle({ key: "start", action: "release" });
+  handle({ key: "start", action: "short" });
   assert.deepEqual(events, ["start:short"]);
 });
 
 test("a long Start press declares checkmate", () => {
-  const { events, setNow, handle } = fixture();
-  setNow(100);
+  const { events, handle } = fixture();
   handle({ key: "start", action: "press" });
-  setNow(1_100);
+  handle({ key: "start", action: "long" });
   handle({ key: "start", action: "release" });
   assert.deepEqual(events, ["start:long"]);
 });
 
-test("OK toggles editing on release; encoder rotates; Back fires on press", () => {
+test("OK and Back react once to short presses; raw and long events are ignored", () => {
   const { events, handle } = fixture();
   handle({ key: "ok", action: "press" });
   handle({ key: "ok", action: "release" });
+  handle({ key: "ok", action: "short" });
+  handle({ key: "ok", action: "long" });
   handle({ key: "encoder", action: "clockwise", delta: 1 });
   handle({ key: "encoder", action: "counterclockwise", delta: -1 });
   handle({ key: "back", action: "press" });
   handle({ key: "back", action: "release" });
+  handle({ key: "back", action: "short" });
+  handle({ key: "back", action: "long" });
   assert.deepEqual(events, ["edit", "encoder:1", "encoder:-1", "back"]);
+});
+
+test("encoder ignores malformed events", () => {
+  const { events, handle } = fixture();
+  handle({ key: "encoder" });
+  handle({ key: "encoder", delta: NaN });
+  handle({ key: "encoder", delta: Infinity });
+  handle({ key: "encoder", delta: 0 });
+  assert.deepEqual(events, []);
 });

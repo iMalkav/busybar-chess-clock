@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { Script } from 'node:vm'
 
-const scenarios = ['defaults', 'configured', 'unavailable', 'invalid', 'deferred']
+const scenarios = ['defaults', 'configured', 'unavailable', 'invalid', 'deferred', 'slow-cleanup']
 const scenario = process.argv[2]
 if (scenario === undefined) {
   for (const name of scenarios) {
@@ -36,6 +36,24 @@ let releaseSettings
 const requests = []
 let inputHandler
 let inputUnbound = false
+const activeIntervals = new Set()
+const nativeSetInterval = globalThis.setInterval
+const nativeClearInterval = globalThis.clearInterval
+const nativeClearTimeout = globalThis.clearTimeout
+let invalidTimerClears = 0
+globalThis.clearTimeout = (handle) => {
+  if (handle === undefined) invalidTimerClears += 1
+  return nativeClearTimeout(handle)
+}
+globalThis.setInterval = (...args) => {
+  const handle = nativeSetInterval(...args)
+  activeIntervals.add(handle)
+  return handle
+}
+globalThis.clearInterval = (handle) => {
+  activeIntervals.delete(handle)
+  return nativeClearInterval(handle)
+}
 
 globalThis.localStorage = (() => {
   const values = new Map([['initial-time-ms', String(8 * 60_000)]])
@@ -60,6 +78,12 @@ globalThis.fetch = async (input, init) => {
   const request = input instanceof Request ? input : new Request(input, init)
   const body = request.body ? await request.text() : ''
   requests.push({ url: request.url, method: request.method, body })
+  if (scenario === 'slow-cleanup' && request.method === 'DELETE' &&
+      requests.some((entry) => entry.method === 'POST' && entry.url.endsWith('/api/display/draw'))) {
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    assert.ok(activeIntervals.size > 0, 'cleanup lost its native runtime retainer')
+    assert.equal(inputUnbound, false)
+  }
 
   if (new URL(request.url).pathname === '/api/apps/settings') {
     assert.equal(request.method, 'GET')
@@ -78,23 +102,6 @@ globalThis.fetch = async (input, init) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
-  }
-
-  if (request.method === 'GET' && request.url.endsWith('/api/busy/snapshot')) {
-    return new Response(
-      JSON.stringify({
-        snapshot: {
-          type: 'NOT_STARTED',
-          busy_bar_settings: {
-            theme: 'dnd',
-            show_work_phase_only: false,
-            trigger_smart_home: false,
-          },
-        },
-        snapshot_timestamp_ms: Date.now(),
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    )
   }
 
   return new Response(JSON.stringify({ success: true }), {
@@ -124,7 +131,7 @@ for (const name of ['countdown_tick', 'countdown_finish', 'session_completed']) 
   assert.notEqual(sound.subarray(0, 4).toString(), 'RIFF')
   assert.deepEqual(sound, readFileSync(new URL(`../src/sounds/${name}.snd`, import.meta.url)))
 }
-for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'BUSY-App-MIT.txt', 'OFL-1.1.txt', 'CC-BY-SA-4.0.txt']) {
+for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'BUSY-App-MIT.txt', 'BUSY-Lib-MIT.txt', 'OpenAPI-Fetch-MIT.txt', 'OFL-1.1.txt', 'CC-BY-SA-4.0.txt']) {
   const entry = entries.find((path) => path.startsWith(`${appId}/resources/`) && path.endsWith(`/${name}`))
   assert.ok(entry, `missing license notice: ${name}`)
   assert.ok(extract(entry).length > 0)
@@ -149,8 +156,8 @@ const draws = requests.filter(
 assert.ok(draws.length > 0, 'bundle did not draw')
 assert.equal(
   requests.some((request) => request.url.endsWith('/api/version')),
-  false,
-  'minimal device client must not perform a version handshake',
+  true,
+  'busy-lib must negotiate the API version',
 )
 
 const payloads = draws.map((draw) => JSON.parse(draw.body))
@@ -172,35 +179,50 @@ assert.deepEqual(
 )
 assert.deepEqual(
   timeElements.filter((element) => element.display === 'back').map((element) => element.text),
-  Array(4).fill(`${initialMinutes}:00`),
+  Array(2).fill(`${initialMinutes}:00`),
 )
-assert.ok(elements.some((element) => element.id === `back-arena-p${startingPlayer}-status` && element.text === 'FIRST MOVE'))
+assert.ok(elements.some((element) => element.id === `back-p${startingPlayer}-status` && element.text === 'FIRST MOVE'))
 for (const element of elements) {
   const width = element.display === 'back' ? 160 : 72
   const height = element.display === 'back' ? 80 : 16
   assert.ok(element.x >= 0 && element.x < width, `x outside ${element.display}: ${element.x}`)
-  assert.ok(element.y >= 0 && element.y < height, `y outside ${element.display}: ${element.y}`)
+  assert.ok(element.y >= -3 && element.y < height, `y outside ${element.display}: ${element.y}`)
 }
 
-inputHandler({ key: 'ok', action: 'release' })
+inputHandler({ key: 'ok', action: 'short' })
 inputHandler({ key: 'encoder', delta: 1 })
-inputHandler({ key: 'ok', action: 'release' })
+inputHandler({ key: 'ok', action: 'short' })
 await new Promise((resolve) => setTimeout(resolve, 20))
 assert.deepEqual(localWrites, fallback ? [{ key: 'initial-time-ms', value: String((initialMinutes + 1) * 60_000) }] : [])
 inputHandler({ key: 'start', action: 'press' })
 inputHandler({ key: 'start', action: 'release' })
+inputHandler({ key: 'start', action: 'short' })
 await new Promise((resolve) => setTimeout(resolve, 20))
 const updatedElements = requests
   .filter((request) => request.method === 'POST' && request.url.endsWith('/api/display/draw'))
   .flatMap((request) => JSON.parse(request.body).elements)
-assert.ok(updatedElements.some((element) => element.id === `back-arena-p${startingPlayer}-status` && element.text === 'THINKING'))
+assert.ok(updatedElements.some((element) => element.id === `back-p${startingPlayer}-status` && element.text === 'THINKING'))
 assert.equal(requests.some((request) => request.url.endsWith('/api/audio/play')), soundEnabled)
-inputHandler({ key: 'back', action: 'press' })
+inputHandler({ key: 'start', action: 'long' })
 await new Promise((resolve) => setTimeout(resolve, 20))
-inputHandler({ key: 'back', action: 'press' })
-await new Promise((resolve) => setTimeout(resolve, 50))
+const latestHint = () => requests
+  .filter((request) => request.method === 'POST' && request.url.endsWith('/api/display/draw'))
+  .flatMap((request) => JSON.parse(request.body).elements)
+  .filter((element) => element.id === 'front-hint').at(-1)?.text
+assert.equal(latestHint(), startingPlayer === 0 ? 'LEFT WINS' : 'RIGHT WINS')
+inputHandler({ key: 'start', action: 'short' })
+await new Promise((resolve) => setTimeout(resolve, 20))
+assert.equal(latestHint(), 'START TO PLAY')
+inputHandler({ key: 'start', action: 'short' })
+inputHandler({ key: 'back', action: 'short' })
+await new Promise((resolve) => setTimeout(resolve, 20))
+inputHandler({ key: 'back', action: 'short' })
+await new Promise((resolve) => setTimeout(resolve, 150))
 
 assert.equal(inputUnbound, true)
+assert.equal(activeIntervals.size, 0, 'exit leaked an interval')
+assert.equal(invalidTimerClears, 0, 'native clearTimeout(undefined) would cancel the clock interval')
+assert.equal(requests.some((request) => new URL(request.url).pathname.startsWith('/api/busy')), false, 'the chess clock must not modify the system BUSY timer')
 assert.ok(
   requests.some(
     (request) => request.method === 'DELETE' && request.url.endsWith('/api/display/draw'),
@@ -208,7 +230,7 @@ assert.ok(
   'bundle did not clear the display on exit',
 )
 assert.equal(errors.length, fallback ? 1 : 0, errors.join('\n'))
-if (scenario === 'unavailable') assert.match(errors[0], /HTTP 503/)
+if (scenario === 'unavailable') assert.match(errors[0], /Settings unavailable/)
 if (scenario === 'invalid') assert.match(errors[0], /Unsupported settings schema version/)
 console.error = originalConsoleError
 

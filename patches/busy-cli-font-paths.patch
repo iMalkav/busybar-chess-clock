@@ -1,0 +1,11 @@
+--- a/dist/lib/fontMapsPlugin.js
++++ b/dist/lib/fontMapsPlugin.js
+@@ -122,7 +122,7 @@
+                 return 'export const MAPS = [];\n';
+             // Importing a map that is not on disk would fail to resolve.
+             const fonts = [...found].filter((f) => known.has(f)).sort();
+-            const imports = fonts.map((f, i) => `import f${i} from '${resolve(maps, `${f}.json`)}';`).join('\n');
++            const imports = fonts.map((f, i) => `import f${i} from ${JSON.stringify(resolve(maps, `${f}.json`).replace(/\\/g, '/'))};`).join('\n');
+             return `${imports}\nexport const MAPS = [${fonts.map((_, i) => `f${i}`).join(', ')}];\n`;
+         },
+         handleHotUpdate({ file, server }) {

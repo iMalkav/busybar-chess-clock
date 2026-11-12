@@ -3,7 +3,7 @@ declare const __BUSY_ADDR__: string;
 
 type BusyInputEvent = {
   key: "encoder" | "start" | "ok" | "back";
-  action: "clockwise" | "counterclockwise" | "press" | "release";
+  action: "clockwise" | "counterclockwise" | "press" | "release" | "short" | "long" | "repeat";
   delta?: number;
 };
 
@@ -13,8 +13,4 @@ declare function listen(type: "input", handler: (event: BusyInputEvent) => void)
 declare module "*.anim" {
   const src: string;
   export default src;
-}
-
-declare module "virtual:font-maps" {
-  export const MAPS: { fonts: Record<string, unknown> }[];
 }

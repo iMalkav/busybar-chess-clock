@@ -10,18 +10,21 @@ The project uses the JavaScript application conventions and shared platform
 helpers from [BUSY App tooling](https://github.com/busy-app/busy-tools).
 Copyright (c) 2026 BUSY App. MIT; see [LICENSES/BUSY-App-MIT.txt](LICENSES/BUSY-App-MIT.txt).
 The npm dependencies retain their own package licenses and are recorded in
-`pnpm-lock.yaml`. The application uses `@busy-app/busy-lib` for TypeScript types;
-its HTTP client is not bundled into the application.
+`pnpm-lock.yaml`.
+
+The application bundles `@busy-app/busy-lib` for HTTP requests, layout and font
+metrics (copyright 2025 Flipper FZCO; [MIT](LICENSES/BUSY-Lib-MIT.txt)), and its
+HTTP dependency `openapi-fetch` ([MIT](LICENSES/OpenAPI-Fetch-MIT.txt)).
+The local pnpm patches fix Windows font-map imports and avoid cancelling a
+native interval when HTTP time-outs are disabled.
 
 ## Device font metrics
 
-`shared/fontMaps/*.json` contains metrics derived from the BUSY Bar device fonts,
-not bundled font images. The BUSY font family derives from Ark Pixel Font:
-copyright 2021 TakWolf (https://ark-pixel-font.takwolf.com/) and 2024–2026 Flipper
-FZCO. `global.json` describes LanaPixel: copyright 2020–2023 eishiya
-(https://mastodon.art/@eishiya).
+Font metrics are provided by `@busy-app/busy-lib`. The BUSY font family derives
+from Ark Pixel Font: copyright 2021 TakWolf
+(https://ark-pixel-font.takwolf.com/) and 2024–2026 Flipper FZCO.
 
-These files retain OFL-1.1; see [LICENSES/OFL-1.1.txt](LICENSES/OFL-1.1.txt).
+The metrics retain OFL-1.1; see [LICENSES/OFL-1.1.txt](LICENSES/OFL-1.1.txt).
 The firmware supplies the actual fonts at runtime.
 
 ## Sound effects

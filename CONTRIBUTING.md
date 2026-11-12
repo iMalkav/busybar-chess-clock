@@ -18,10 +18,10 @@ the firmware version when testing on a device.
 - `src/input.ts`: button, encoder and long-press mapping.
 - `src/settings.ts`: validation of the firmware settings document.
 - `src/appmeta/settings.json`: settings shown by the firmware UI.
-- `src/visuals.ts`: animation timing and time-pressure state.
 - `src/screens/clock.ts`: display composition.
 - `src/main.ts`: lifecycle, persistence and display updates.
-- `shared/`: HTTP client, font metrics and layout helpers.
+- `src/device.ts`: on-device busy-lib client.
+- `scripts/generate-icons.py`: pixel grids and palettes for both menu icons.
 - `scripts/`: resource preparation, metadata validation and release packaging.
 
 Commit `pnpm-lock.yaml` with dependency changes. Generated builds, installed
@@ -34,7 +34,7 @@ shortcuts are temporary when firmware settings are available.
 
 For asset changes, update [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) with
 the source and license. Original WAV files are in `art/sounds/`; regenerate the
-committed device sounds with `python scripts/convert_sounds.py`. Python is only
-needed for this conversion.
+committed device sounds with `python scripts/convert_sounds.py`. Regenerate menu icons with
+`python scripts/generate-icons.py`. Python is only needed for asset generation.
 
 See [docs/RELEASING.md](docs/RELEASING.md) for the release process.
