@@ -22,7 +22,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -b",
-    "test": "node --test tests/clock.test.ts tests/input.test.ts tests/visuals.test.ts tests/settings.test.ts tests/metadata.test.mjs",
+    "test": "node --test tests/clock.test.ts tests/input.test.ts tests/screens.test.ts tests/settings.test.ts tests/metadata.test.mjs",
     "metadata": "node scripts/metadata.mjs",
     "build": "node scripts/prepare-resources.mjs && busy-cli build --emit both --bundle",
     "smoke": "node tests/bundle-smoke.mjs",
@@ -44,5 +44,11 @@
   },
   "dependencies": {
     "@busy-app/busy-lib": "0.21.1"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@busy-app/cli@0.6.0": "patches/busy-cli-font-paths.patch",
+      "@busy-app/busy-lib@0.21.1": "patches/busy-lib-native-timers.patch"
+    }
   }
 }

@@ -4,17 +4,25 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@busy-app/busy-lib@0.21.1':
+    hash: 65913ce604e50c2023ae64dccfb520238cb9a74cde2cc2754a16791a08c1132c
+    path: patches/busy-lib-native-timers.patch
+  '@busy-app/cli@0.6.0':
+    hash: 1c416f97999f59b95e16f3318cd0ca76d5cb49d7212fe3aa7b6a9bba53a15676
+    path: patches/busy-cli-font-paths.patch
+
 importers:
 
   .:
     dependencies:
       '@busy-app/busy-lib':
         specifier: 0.21.1
-        version: 0.21.1
+        version: 0.21.1(patch_hash=65913ce604e50c2023ae64dccfb520238cb9a74cde2cc2754a16791a08c1132c)
     devDependencies:
       '@busy-app/cli':
         specifier: 0.6.0
-        version: 0.6.0(@types/node@24.13.4)
+        version: 0.6.0(patch_hash=1c416f97999f59b95e16f3318cd0ca76d5cb49d7212fe3aa7b6a9bba53a15676)(@types/node@24.13.4)
       '@types/node':
         specifier: 24.13.4
         version: 24.13.4
@@ -486,12 +494,12 @@ packages:
 
 snapshots:
 
-  '@busy-app/busy-lib@0.21.1':
+  '@busy-app/busy-lib@0.21.1(patch_hash=65913ce604e50c2023ae64dccfb520238cb9a74cde2cc2754a16791a08c1132c)':
     dependencies:
       openapi-fetch: 0.14.1
       protobufjs: 8.8.0
 
-  '@busy-app/cli@0.6.0(@types/node@24.13.4)':
+  '@busy-app/cli@0.6.0(patch_hash=1c416f97999f59b95e16f3318cd0ca76d5cb49d7212fe3aa7b6a9bba53a15676)(@types/node@24.13.4)':
     dependencies:
       '@clack/prompts': 1.8.1
       vite: 8.1.4(@types/node@24.13.4)

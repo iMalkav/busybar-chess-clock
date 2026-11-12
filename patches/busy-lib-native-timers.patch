@@ -1,0 +1,22 @@
+--- a/dist/BusyBar/api/createClient.js
++++ b/dist/BusyBar/api/createClient.js
+@@ -134,7 +134,7 @@
+       }
+       throw error;
+     } finally {
+-      clearTimeout(timeoutId);
++      if (timeoutId !== void 0) clearTimeout(timeoutId);
+     }
+   };
+   client.use(middleware);
+--- a/dist/BusyBar/api/createClient.cjs
++++ b/dist/BusyBar/api/createClient.cjs
+@@ -136,7 +136,7 @@
+       }
+       throw error;
+     } finally {
+-      clearTimeout(timeoutId);
++      if (timeoutId !== void 0) clearTimeout(timeoutId);
+     }
+   };
+   client.use(middleware);

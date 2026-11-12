@@ -10,7 +10,7 @@ and installed as a JavaScript application.
 - Both players' clocks on the front and rear displays.
 - Selectable starting player and initial time from 1 to 60 minutes.
 - One-button turn switching and move counts.
-- Sound and color cues for turn changes, time pressure and game results.
+- Sound cues and a steady indicator for the active player, time pressure and results.
 - Saved settings for initial time, first player and sound.
 
 ## Screenshots
@@ -48,14 +48,14 @@ settings.
 
 | Input | Before the game | During the game | After the result |
 | --- | --- | --- | --- |
-| Short Start | Start the selected player's clock | Pass the turn | — |
-| Hold Start for at least 1 second, then release | — | Declare checkmate; the active player wins | Reset with the same setup |
+| Short Start | Start the selected player's clock | Pass the turn | Reset with the same setup |
+| Hold Start | — | Declare checkmate; the active player wins | — |
 | OK | Enter or confirm time editing | — | — |
 | Encoder | Select the first player; while editing, change both clocks by 1 minute | — | — |
 | Back | Exit; while editing, return to the start screen | Reset and return to the start screen | Return to the start screen |
 
-The initial time is set before play. Tenths of a second appear below one minute
-on the front display and during the last ten seconds on the rear display.
+The initial time is set before play. Both displays show tenths of a second
+below one minute.
 Checkmate is declared by a player through the Start button.
 
 ## Development
@@ -77,7 +77,7 @@ be omitted.
 | --- | --- |
 | `pnpm metadata` | Validate manifest and package versions |
 | `pnpm typecheck` | Type-check app, helpers and tests |
-| `pnpm test` | Run clock, input, settings, visual-state and metadata tests |
+| `pnpm test` | Run clock, input, settings, layout and metadata tests |
 | `pnpm build` | Build the application directory and `.tgz` package |
 | `pnpm smoke` | Check the built package and startup/exit with a mocked API |
 | `pnpm check` | Run validation, tests, build and smoke check |
@@ -92,9 +92,18 @@ The build uses `@busy-app/cli` to create `dist/ru.malk-it.chess_clock/` and
 The application calls its device's API through `localhost`. To select a device
 for installation or control, pass `--addr <host>` to an `app:` command.
 
-Timing uses `Date.now()` with a 250 ms update interval. Host tests use a mocked
+Timing uses `Date.now()` with a 100 ms update interval. Only changed display
+elements are sent to the device. Layout and HTTP requests use `@busy-app/busy-lib`.
+Host tests use a mocked
 device API; physical device checks are listed in the
 [release guide](docs/RELEASING.md).
+
+Menu icons can be regenerated with `python scripts/generate-icons.py`.
+
+Two small pnpm patches keep the pinned tooling compatible with the app:
+escaped font-map imports on Windows and a guard against cancelling native
+timer zero when busy-lib's HTTP time-outs are disabled. Both are applied
+automatically by `pnpm install`.
 
 ## Releases and contributing
 
